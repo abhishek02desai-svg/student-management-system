@@ -55,6 +55,11 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-oauth2-resource-server</artifactId>
         </dependency>
+        <!--  Actuator (health, info, metrics, caches)  -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
         <!--  Redis caching  -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

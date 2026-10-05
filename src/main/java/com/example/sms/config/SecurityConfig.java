@@ -27,6 +27,8 @@ public class SecurityConfig {
                         // public: Swagger UI + OpenAPI document
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        // public: Actuator health + info (all other /actuator/** endpoints need a token)
+                        .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
                         // everything else needs a valid JWT
                         .anyRequest().authenticated()
                 )

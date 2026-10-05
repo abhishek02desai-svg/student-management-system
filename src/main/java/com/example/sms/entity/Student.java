@@ -14,7 +14,7 @@ import java.util.Set;
 @AllArgsConstructor
 @RequiredArgsConstructor
 @Builder
-public class Student {
+public class Student extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -59,4 +59,3 @@ public class Student {
     private Set<Course> courses = new HashSet<>();
 
 }
-
