@@ -17,4 +17,6 @@ public interface StudentRepository extends JpaRepository<Student, Long>, JpaSpec
     boolean existsByDepartmentId(Long departmentId);
 
     boolean existsByCoursesId(Long courseId);
+
+    boolean existsByIdAndCoursesId(Long studentId, Long courseId);
 }

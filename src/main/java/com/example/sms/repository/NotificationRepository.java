@@ -1,0 +1,13 @@
+package com.example.sms.repository;
+
+import com.example.sms.entity.Notification;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface NotificationRepository extends JpaRepository<Notification, Long> {
+
+    List<Notification> findByStudentIdOrderByCreatedAtDescIdDesc(Long studentId);
+
+    void deleteByStudentId(Long studentId);
+}

@@ -55,6 +55,11 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-oauth2-resource-server</artifactId>
         </dependency>
+        <!--  AOP: needed for the @Aspect execution-time logger (version managed by Spring Boot)  -->
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+        </dependency>
         <!--  Actuator (health, info, metrics, caches)  -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

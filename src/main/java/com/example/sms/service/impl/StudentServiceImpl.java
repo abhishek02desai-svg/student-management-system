@@ -17,6 +17,8 @@ import com.example.sms.exception.DuplicateResourceException;
 import com.example.sms.exception.ResourceNotFoundException;
 import com.example.sms.repository.CourseRepository;
 import com.example.sms.repository.DepartmentRepository;
+import com.example.sms.repository.EnrollmentRequestRepository;
+import com.example.sms.repository.NotificationRepository;
 import com.example.sms.repository.StudentRepository;
 import com.example.sms.service.FileStorageService;
 import com.example.sms.service.StudentService;
@@ -66,6 +68,8 @@ public class StudentServiceImpl implements StudentService {
     private final DepartmentRepository departmentRepository;
     private final CourseRepository courseRepository;
     private final FileStorageService fileStorageService;
+    private final EnrollmentRequestRepository enrollmentRequestRepository;
+    private final NotificationRepository notificationRepository;
 
     @Override
     @Transactional
@@ -183,6 +187,10 @@ public class StudentServiceImpl implements StudentService {
 
         Student existingStudent = findStudent(id);
         String imageName = existingStudent.getProfileImageName();
+
+        // remove rows that point to this student first (foreign keys)
+        enrollmentRequestRepository.deleteByStudentId(id);
+        notificationRepository.deleteByStudentId(id);
 
         studentRepository.delete(existingStudent);
         fileStorageService.delete(imageName);

@@ -12,6 +12,7 @@ import com.example.sms.exception.DuplicateResourceException;
 import com.example.sms.exception.ResourceNotFoundException;
 import com.example.sms.repository.CourseRepository;
 import com.example.sms.repository.DepartmentRepository;
+import com.example.sms.repository.EnrollmentRequestRepository;
 import com.example.sms.repository.StudentRepository;
 import com.example.sms.service.CourseService;
 import com.example.sms.specification.CourseSpecification;
@@ -49,6 +50,7 @@ public class CourseServiceImpl implements CourseService {
     private final CourseRepository courseRepository;
     private final DepartmentRepository departmentRepository;
     private final StudentRepository studentRepository;
+    private final EnrollmentRequestRepository enrollmentRequestRepository;
 
     @Override
     @Transactional
@@ -145,6 +147,9 @@ public class CourseServiceImpl implements CourseService {
         if (studentRepository.existsByCoursesId(id)) {
             throw new ConflictException("Cannot delete course: students are still enrolled in it");
         }
+
+        // remove enrollment requests of this course first (foreign key)
+        enrollmentRequestRepository.deleteByCourseId(id);
 
         courseRepository.delete(course);
     }
