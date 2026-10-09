@@ -1,6 +1,7 @@
 package com.example.sms.repository;
 
 import com.example.sms.entity.Student;
+import com.example.sms.enums.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
@@ -19,4 +20,6 @@ public interface StudentRepository extends JpaRepository<Student, Long>, JpaSpec
     boolean existsByCoursesId(Long courseId);
 
     boolean existsByIdAndCoursesId(Long studentId, Long courseId);
+
+    long countByRole(Role role);
 }

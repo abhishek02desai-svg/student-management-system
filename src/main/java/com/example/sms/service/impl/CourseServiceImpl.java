@@ -73,6 +73,8 @@ public class CourseServiceImpl implements CourseService {
                         .title(dto.getTitle().trim())
                         .description(dto.getDescription())
                         .credits(dto.getCredits())
+                        .credits(dto.getCapacity())
+                        .capacity(dto.getCapacity())
                         .department(findDepartment(dto.getDepartmentId()))
                         .build());
 
@@ -127,6 +129,7 @@ public class CourseServiceImpl implements CourseService {
         course.setTitle(dto.getTitle().trim());
         course.setDescription(dto.getDescription());
         course.setCredits(dto.getCredits());
+        course.setCapacity(dto.getCapacity());
         course.setDepartment(findDepartment(dto.getDepartmentId()));
 
         return toDto(courseRepository.save(course));
@@ -172,6 +175,7 @@ public class CourseServiceImpl implements CourseService {
                 .title(c.getTitle())
                 .description(c.getDescription())
                 .credits(c.getCredits())
+                .capacity(c.getCapacity())
                 .department(DepartmentSummaryDto.builder()
                         .id(d.getId())
                         .name(d.getName())

@@ -22,6 +22,9 @@ public class CourseRequestDto {
     @Max(value = 10, message = "Credits must be at most 10")
     private Integer credits;
 
+    @NotNull(message = "Capacity are required")
+    private Integer capacity;
+
     @NotNull(message = "Department id is required")
     private Long departmentId;
 }

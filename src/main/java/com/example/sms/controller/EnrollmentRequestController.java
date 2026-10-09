@@ -11,28 +11,45 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/enrollment-requests")
 @RequiredArgsConstructor
-@Tag(name = "Enrollment Requests", description = "Student asks for a course; approve / reject sends a notification")
+@Tag(name = "Enrollment Requests", description = "Student asks for a course; ADMIN approves / rejects and the student is notified")
 public class EnrollmentRequestController {
 
     private final EnrollmentRequestService enrollmentRequestService;
 
-    @Operation(summary = "Student requests a course (status starts as PENDING)")
+    @Operation(summary = "Request a course (status starts as PENDING). A student can only request for himself/herself")
+    @PreAuthorize("hasRole('ADMIN') or @authz.isSelf(authentication, #dto.studentId)")
     @PostMapping("/create")
     public ResponseEntity<EnrollmentRequestResponseDto> create(@Valid @RequestBody EnrollmentRequestCreateDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(enrollmentRequestService.createRequest(dto));
     }
 
+    @Operation(summary = "My own requests (logged-in student), newest first")
+    @GetMapping("/my")
+    public ResponseEntity<PageResponse<EnrollmentRequestResponseDto>> myRequests(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Long studentId = ((Number) jwt.getClaims().get("studentId")).longValue();
+        return ResponseEntity.ok(enrollmentRequestService.searchRequests(null, studentId, page, size, "id", "desc"));
+    }
+
+    @Operation(summary = "One request by id (ADMIN only)")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<EnrollmentRequestResponseDto> getById(@PathVariable Long id) {
         return ResponseEntity.ok(enrollmentRequestService.getRequestById(id));
     }
 
-    @Operation(summary = "List requests (paged + sorted)",
+    @Operation(summary = "List all requests (ADMIN only, paged + sorted)",
             description = "Optional filters: status (PENDING | APPROVE | REJECT) and studentId. "
                     + "sortBy: id | status | createdAt. direction: asc | desc")
     @GetMapping("/search")
@@ -48,13 +65,13 @@ public class EnrollmentRequestController {
                 status, studentId, page, size, sortBy, direction));
     }
 
-    @Operation(summary = "Approve a PENDING request: enrolls the student and sends a notification")
+    @Operation(summary = "Approve a PENDING request (ADMIN only): enrolls the student and sends a notification")
     @PutMapping("/{id}/approve")
     public ResponseEntity<EnrollmentRequestResponseDto> approve(@PathVariable Long id) {
         return ResponseEntity.ok(enrollmentRequestService.approveRequest(id));
     }
 
-    @Operation(summary = "Reject a PENDING request and send a notification")
+    @Operation(summary = "Reject a PENDING request (ADMIN only) and send a notification")
     @PutMapping("/{id}/reject")
     public ResponseEntity<EnrollmentRequestResponseDto> reject(@PathVariable Long id) {
         return ResponseEntity.ok(enrollmentRequestService.rejectRequest(id));

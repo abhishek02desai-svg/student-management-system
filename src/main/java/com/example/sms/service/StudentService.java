@@ -7,6 +7,7 @@ import com.example.sms.dto.StudentPatchRequestDto;
 import com.example.sms.dto.StudentRequestDto;
 import com.example.sms.dto.StudentResponseDto;
 import com.example.sms.dto.StudentSearchCriteria;
+import com.example.sms.enums.Role;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -34,6 +35,9 @@ public interface StudentService {
     StudentResponseDto enrollInCourse(Long studentId, Long courseId);
 
     StudentResponseDto unenrollFromCourse(Long studentId, Long courseId);
+
+    // ---- roles (ADMIN only) ----
+    StudentResponseDto changeRole(Long studentId, Role role);
 
     // ---- authentication support ----
     // photo is optional (null or empty = no photo). Student and photo are saved together:

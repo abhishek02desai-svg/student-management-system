@@ -1,5 +1,6 @@
 package com.example.sms.entity;
 
+import com.example.sms.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -38,6 +39,12 @@ public class Student extends BaseEntity {
     // BCrypt hash. Nullable so students created before login existed are not broken.
     @Column(length = 100)
     private String password;
+
+    // STUDENT (default) or ADMIN. columnDefinition gives old rows a value when Hibernate adds the column.
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'STUDENT'")
+    @Builder.Default
+    private Role role = Role.STUDENT;
 
     // Name of the uploaded profile image file (stored on disk, not in the DB)
     @Column(length = 255)

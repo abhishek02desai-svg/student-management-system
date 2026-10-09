@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +32,7 @@ public class NotificationController {
     }
 
     @Operation(summary = "Notifications of a student by id (newest first)")
+    @PreAuthorize("hasRole('ADMIN') or @authz.isSelf(authentication, #studentId)")
     @GetMapping("/student/{studentId}")
     public ResponseEntity<List<NotificationResponseDto>> byStudent(@PathVariable Long studentId) {
         return ResponseEntity.ok(notificationService.getNotificationsForStudent(studentId));

@@ -6,6 +6,7 @@ import com.example.sms.dto.StudentPatchRequestDto;
 import com.example.sms.dto.StudentRequestDto;
 import com.example.sms.dto.StudentResponseDto;
 import com.example.sms.dto.StudentSearchCriteria;
+import com.example.sms.enums.Role;
 import com.example.sms.service.StudentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -62,6 +64,7 @@ public class StudentController {
     }
 
 
+    @PreAuthorize("hasRole('ADMIN') or @authz.isSelf(authentication, #id)")
     @GetMapping("/{id}")
     public ResponseEntity<StudentResponseDto> getStudentById(
             @PathVariable Long id) {
@@ -76,6 +79,7 @@ public class StudentController {
     }
 
 
+    @PreAuthorize("hasRole('ADMIN') or @authz.isSelf(authentication, #id)")
     @PutMapping("/update/{id}")
     public ResponseEntity<StudentResponseDto> updateStudent(
             @PathVariable Long id,
@@ -106,6 +110,7 @@ public class StudentController {
     }
 
 
+    @PreAuthorize("hasRole('ADMIN') or @authz.isSelf(authentication, #id)")
     @PatchMapping("/patch/{id}")
     public ResponseEntity<StudentResponseDto> patchStudent(
             @PathVariable Long id,
@@ -182,6 +187,7 @@ public class StudentController {
     // MULTIPART: profile image
     // ==========================================================
     @Operation(summary = "Upload / replace profile image (multipart, JPEG or PNG, max 2 MB)")
+    @PreAuthorize("hasRole('ADMIN') or @authz.isSelf(authentication, #id)")
     @PostMapping(value = "/{id}/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<StudentResponseDto> uploadProfileImage(
             @PathVariable Long id,
@@ -193,6 +199,7 @@ public class StudentController {
     }
 
     @Operation(summary = "Download / view the profile image")
+    @PreAuthorize("hasRole('ADMIN') or @authz.isSelf(authentication, #id)")
     @GetMapping("/{id}/profile-image")
     public ResponseEntity<Resource> getProfileImage(@PathVariable Long id) {
 
@@ -205,9 +212,23 @@ public class StudentController {
     }
 
     @Operation(summary = "Delete the profile image")
+    @PreAuthorize("hasRole('ADMIN') or @authz.isSelf(authentication, #id)")
     @DeleteMapping("/{id}/profile-image")
     public ResponseEntity<StudentResponseDto> deleteProfileImage(@PathVariable Long id) {
 
         return ResponseEntity.ok(studentService.deleteProfileImage(id));
+    }
+
+
+    // ==========================================================
+    // ROLES (ADMIN only - enforced in SecurityConfig)
+    // ==========================================================
+    @Operation(summary = "Change a student's role (ADMIN only). role = STUDENT or ADMIN")
+    @PutMapping("/{id}/role/{role}")
+    public ResponseEntity<StudentResponseDto> changeRole(
+            @PathVariable Long id,
+            @PathVariable Role role) {
+
+        return ResponseEntity.ok(studentService.changeRole(id, role));
     }
 }

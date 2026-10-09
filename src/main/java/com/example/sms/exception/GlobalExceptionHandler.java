@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
@@ -121,6 +122,18 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         return build(HttpStatus.UNAUTHORIZED, exception.getMessage(), request, null);
+    }
+
+
+    // thrown by @PreAuthorize when the logged-in user is not allowed
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+            AccessDeniedException exception,
+            HttpServletRequest request) {
+
+        log.warn("Access denied. Path: {}", request.getRequestURI());
+
+        return build(HttpStatus.FORBIDDEN, "You do not have permission to do this", request, null);
     }
 
 

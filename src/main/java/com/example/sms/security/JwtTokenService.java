@@ -32,6 +32,7 @@ public class JwtTokenService {
                 .expiresAt(now.plus(Duration.ofMinutes(expirationMinutes)))
                 .subject(student.getEmail())
                 .claim("studentId", student.getId())
+                .claim("role", student.getRole().name())
                 .build();
 
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();

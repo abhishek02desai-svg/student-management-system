@@ -12,7 +12,9 @@ import com.example.sms.dto.StudentSearchCriteria;
 import com.example.sms.entity.Course;
 import com.example.sms.entity.Department;
 import com.example.sms.entity.Student;
+import com.example.sms.enums.Role;
 import com.example.sms.exception.BadRequestException;
+import com.example.sms.exception.ConflictException;
 import com.example.sms.exception.DuplicateResourceException;
 import com.example.sms.exception.ResourceNotFoundException;
 import com.example.sms.repository.CourseRepository;
@@ -179,7 +181,8 @@ public class StudentServiceImpl implements StudentService {
     @Transactional
     @Caching(evict = {
             @CacheEvict(cacheNames = "student", key = "#id"),
-            @CacheEvict(cacheNames = "studentSearch", allEntries = true)
+            @CacheEvict(cacheNames = "studentSearch", allEntries = true),
+            @CacheEvict(cacheNames = {"course", "courseSearch"}, allEntries = true)   // seats are freed
     })
     public void deleteStudent(Long id) {
 
@@ -187,6 +190,10 @@ public class StudentServiceImpl implements StudentService {
 
         Student existingStudent = findStudent(id);
         String imageName = existingStudent.getProfileImageName();
+
+        // free the seats this student was holding
+        existingStudent.getCourses().forEach(course ->
+                course.setEnrolledCount(Math.max(0, course.getEnrolledCount() - 1)));
 
         // remove rows that point to this student first (foreign keys)
         enrollmentRequestRepository.deleteByStudentId(id);
@@ -315,14 +322,18 @@ public class StudentServiceImpl implements StudentService {
     @Transactional
     @Caching(
             put = @CachePut(cacheNames = "student", key = "#studentId"),
-            evict = @CacheEvict(cacheNames = "studentSearch", allEntries = true)
+            evict = {
+                    @CacheEvict(cacheNames = "studentSearch", allEntries = true),
+                    @CacheEvict(cacheNames = {"course", "courseSearch"}, allEntries = true)   // seat count changed
+            }
     )
     public StudentResponseDto enrollInCourse(Long studentId, Long courseId) {
 
         log.info("Enrolling student {} in course {}", studentId, courseId);
 
         Student student = findStudent(studentId);
-        Course course = courseRepository.findById(courseId)
+        // locks the course row until commit, so two students cannot take the last seat together
+        Course course = courseRepository.findByIdForUpdate(courseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found : " + courseId));
 
         boolean alreadyEnrolled = student.getCourses().stream()
@@ -332,7 +343,12 @@ public class StudentServiceImpl implements StudentService {
                     "Student " + studentId + " is already enrolled in course " + courseId);
         }
 
+        if (course.isFull()) {
+            throw new ConflictException("Course is full. Capacity: " + course.getCapacity());
+        }
+
         student.getCourses().add(course);
+        course.setEnrolledCount(course.getEnrolledCount() + 1);
 
         return entityToDto(studentRepository.save(student));
     }
@@ -342,7 +358,10 @@ public class StudentServiceImpl implements StudentService {
     @Transactional
     @Caching(
             put = @CachePut(cacheNames = "student", key = "#studentId"),
-            evict = @CacheEvict(cacheNames = "studentSearch", allEntries = true)
+            evict = {
+                    @CacheEvict(cacheNames = "studentSearch", allEntries = true),
+                    @CacheEvict(cacheNames = {"course", "courseSearch"}, allEntries = true)   // seat count changed
+            }
     )
     public StudentResponseDto unenrollFromCourse(Long studentId, Long courseId) {
 
@@ -355,6 +374,37 @@ public class StudentServiceImpl implements StudentService {
             throw new ResourceNotFoundException(
                     "Student " + studentId + " is not enrolled in course " + courseId);
         }
+
+        // give the seat back
+        courseRepository.findByIdForUpdate(courseId).ifPresent(course ->
+                course.setEnrolledCount(Math.max(0, course.getEnrolledCount() - 1)));
+
+        return entityToDto(studentRepository.save(student));
+    }
+
+
+    // ==========================================================
+    // ROLES
+    // ==========================================================
+    @Override
+    @Transactional
+    @Caching(
+            put = @CachePut(cacheNames = "student", key = "#studentId"),
+            evict = @CacheEvict(cacheNames = "studentSearch", allEntries = true)
+    )
+    public StudentResponseDto changeRole(Long studentId, Role role) {
+
+        log.info("Changing role of student {} to {}", studentId, role);
+
+        Student student = findStudent(studentId);
+
+        // never leave the system without an admin
+        if (student.getRole() == Role.ADMIN && role != Role.ADMIN
+                && studentRepository.countByRole(Role.ADMIN) <= 1) {
+            throw new ConflictException("Cannot remove the last admin");
+        }
+
+        student.setRole(role);
 
         return entityToDto(studentRepository.save(student));
     }
@@ -533,6 +583,7 @@ public class StudentServiceImpl implements StudentService {
                 .email(student.getEmail())
                 .phoneNumber(student.getPhoneNumber())
                 .dateOfBirth(student.getDateOfBirth())
+                .role(student.getRole())
                 .profileImageUrl(student.getProfileImageName() == null
                         ? null
                         : "/api/students/" + student.getId() + "/profile-image")

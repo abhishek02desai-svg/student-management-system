@@ -31,13 +31,22 @@ public class Course extends BaseEntity {
     @Column(nullable = false)
     private Integer credits;
 
-    // Many Courses -> One Department
+    @Column(nullable = false, columnDefinition = "integer default 30")
+    private Integer capacity;
+
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "integer default 0")
+    private Integer enrolledCount = 0;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "department_id", nullable = false)
     private Department department;
 
-    // Many Courses <-> Many Students (owning side is Student.courses)
     @ManyToMany(mappedBy = "courses")
     @Builder.Default
     private Set<Student> students = new HashSet<>();
+
+    public boolean isFull() {
+        return enrolledCount >= capacity;
+    }
 }

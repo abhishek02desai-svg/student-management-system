@@ -22,5 +22,6 @@ public class CourseResponseDto implements Serializable {
     private String title;
     private String description;
     private Integer credits;
+    private Integer capacity;
     private DepartmentSummaryDto department;
 }

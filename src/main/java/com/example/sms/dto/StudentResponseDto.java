@@ -1,5 +1,6 @@
 package com.example.sms.dto;
 
+import com.example.sms.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,7 +19,7 @@ import java.util.List;
 public class StudentResponseDto implements Serializable {
 
     @Serial
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;   // changed: new "role" field
 
     private Long id;
     private String firstName;
@@ -26,6 +27,7 @@ public class StudentResponseDto implements Serializable {
     private String email;
     private String phoneNumber;
     private LocalDate dateOfBirth;
+    private Role role;
 
     // null when the student has no profile image
     private String profileImageUrl;
